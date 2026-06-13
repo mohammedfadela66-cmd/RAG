@@ -1,0 +1,292 @@
+[
+  {
+    "title": "Flow Burstiness Calculation",
+    "category": "ML_Feature",
+    "description": "Measures the burstiness of network traffic flow to detect sudden packet spikes typical in DoS attacks.",
+    "features": "total_pkts, dur_safe",
+    "detection": "Calculated strictly as total_pkts / dur_safe. Prevents double division errors.",
+    "mitigation": "Used internally by the models for rapid anomaly detection.",
+    "references": "Internal IDS Pipeline Architecture",
+    "tags": ["ml", "features", "math", "flow"]
+  },
+  {
+    "title": "Real-time Flow Tracking Context",
+    "category": "Architecture",
+    "description": "Defines how individual network flows are tracked and identified in real-time.",
+    "features": "initiator_ip",
+    "detection": "Flows are mapped and behavioral context is retrieved using the initiator_ip rather than generic canonical keys.",
+    "mitigation": "Ensures accurate attribution of malicious behavior to the correct source.",
+    "references": "System Architecture v2",
+    "tags": ["flow", "tracking", "ip"]
+  },
+  {
+    "title": "Feature Set Exclusions",
+    "category": "ML_Feature",
+    "description": "Guidelines on feature selection for the live IDS detection engine.",
+    "features": "Packet Size Entropy",
+    "detection": "The 'Packet Size Entropy' feature is explicitly removed from the live classification pipeline as it cannot be reliably computed in real-time.",
+    "mitigation": "Ensures dataset integrity and prevents real-time pipeline latency.",
+    "references": "Data Preprocessing Protocols",
+    "tags": ["ml", "features", "entropy", "integrity"]
+  },
+  {
+    "title": "OSI Model",
+    "category": "Network_Fundamentals",
+    "description": "A conceptual framework standardizing the functions of a telecommunication system into seven layers: Physical, Data Link, Network, Transport, Session, Presentation, Application.",
+    "features": "Layer 2 (MAC), Layer 3 (IP), Layer 4 (TCP/UDP), Layer 7 (HTTP/DNS).",
+    "detection": "IDS systems monitor Layers 3 and 4 for flow data, and Layer 7 for payload anomalies.",
+    "mitigation": "N/A - Conceptual Framework.",
+    "references": "ISO/IEC 7498-1 Standard",
+    "tags": ["osi", "layers", "networking"]
+  },
+  {
+    "title": "TCP/IP Protocol Suite",
+    "category": "Network_Fundamentals",
+    "description": "The foundational communication protocols for the internet, operating primarily on four layers: Network Access, Internet, Transport, and Application.",
+    "features": "Connection-oriented (TCP) and connectionless (UDP) transport.",
+    "detection": "Anomalies in TCP flags (SYN, ACK, FIN, RST) indicate state manipulation attacks.",
+    "mitigation": "Proper subnetting and strict firewall ACLs.",
+    "references": "RFC 1122",
+    "tags": ["tcp", "ip", "suite"]
+  },
+  {
+    "title": "Subnetting and CIDR",
+    "category": "Network_Fundamentals",
+    "description": "The practice of dividing a network into two or more smaller networks. Classless Inter-Domain Routing (CIDR) is a method for allocating IP addresses and IP routing.",
+    "features": "Subnet masks, IP ranges, Broadcast IDs, Network IDs.",
+    "detection": "Detecting attacks trying to scan across different subnet boundaries.",
+    "mitigation": "VLAN segregation and strict routing policies to isolate critical systems.",
+    "references": "RFC 4632 (CIDR)",
+    "tags": ["subnetting", "cidr", "routing"]
+  },
+  {
+    "title": "VLAN (Virtual Local Area Network)",
+    "category": "Network_Fundamentals",
+    "description": "Any broadcast domain that is partitioned and isolated in a computer network at the data link layer (OSI layer 2).",
+    "features": "802.1Q tagging, broadcast isolation.",
+    "detection": "Monitoring for VLAN hopping attacks (Double Tagging).",
+    "mitigation": "Disable Dynamic Trunking Protocol (DTP), put unused ports in a dead VLAN.",
+    "references": "IEEE 802.1Q",
+    "tags": ["vlan", "switching", "isolation"]
+  },
+  {
+    "title": "NAT (Network Address Translation)",
+    "category": "Network_Fundamentals",
+    "description": "A method of mapping an IP address space into another by modifying network address information in the IP header of packets while they are in transit.",
+    "features": "Public vs Private IPs, Port Address Translation (PAT).",
+    "detection": "Correlating internal IP addresses with external translated IPs during incident response.",
+    "mitigation": "Hides internal network structure from external reconnaissance.",
+    "references": "RFC 1631",
+    "tags": ["nat", "pat", "routing"]
+  },
+  {
+    "title": "Transmission Control Protocol (TCP)",
+    "category": "Protocols",
+    "description": "A connection-oriented communications protocol that facilitates the exchange of messages between computing devices in a network.",
+    "features": "Three-way handshake (SYN, SYN-ACK, ACK), reliable delivery, sequencing.",
+    "detection": "High rate of incomplete handshakes indicates network scanning or DoS.",
+    "mitigation": "TCP timeout tuning, stateful packet inspection.",
+    "references": "RFC 793",
+    "tags": ["tcp", "transport", "handshake"]
+  },
+  {
+    "title": "User Datagram Protocol (UDP)",
+    "category": "Protocols",
+    "description": "A communications protocol that is primarily used to establish low-latency and loss-tolerating connections between applications on the internet.",
+    "features": "Connectionless, no handshakes, fast transmission, susceptible to spoofing.",
+    "detection": "Sudden massive spikes in UDP traffic on random ports.",
+    "mitigation": "Rate limiting UDP traffic on edge routers.",
+    "references": "RFC 768",
+    "tags": ["udp", "transport", "fast"]
+  },
+  {
+    "title": "SYN Flood Attack",
+    "category": "Attacks",
+    "description": "A DoS attack targeting the TCP handshake by sending a massive succession of SYN requests to exhaust connection queues.",
+    "features": "High SYN packet rate, extremely low ACK completion ratio, massive half-open connections.",
+    "detection": "Observed severe SYN >> ACK imbalance from an initiator_ip.",
+    "mitigation": "SYN cookies deployment, TCP timeout tuning, automated firewall filtering.",
+    "references": "RFC 4987",
+    "tags": ["dos", "tcp", "syn", "handshake"]
+  },
+  {
+    "title": "UDP Flood Attack",
+    "category": "Attacks",
+    "description": "A volumetric DoS attack where the attacker overwhelms random ports on the targeted host with IP packets containing UDP datagrams.",
+    "features": "Exceptionally high rate of UDP packets, random destination ports.",
+    "detection": "High 'total_pkts' over a short 'dur_safe' specifically over UDP protocol.",
+    "mitigation": "Rate limiting UDP traffic, utilizing upstream scrubbing centers.",
+    "references": "US-CERT UDP-Based Amplification Attacks",
+    "tags": ["ddos", "udp", "flood"]
+  },
+  {
+    "title": "Port Scan Reconnaissance",
+    "category": "Attacks",
+    "description": "Attackers probe server ports to map open services and find vulnerabilities.",
+    "features": "High destination port diversity from a single initiator_ip, frequent TCP RST responses.",
+    "detection": "Rapid connection attempts to multiple distinct ports over a short time.",
+    "mitigation": "Stateful firewalls configured to block IP addresses exhibiting sweep behavior.",
+    "references": "MITRE ATT&CK T1046 (Network Service Discovery)",
+    "tags": ["reconnaissance", "scanning", "ports"]
+  },
+  {
+    "title": "Brute Force Attack",
+    "category": "Attacks",
+    "description": "A trial-and-error method to decode encrypted data or passwords through exhaustive effort.",
+    "features": "High volume of login requests, identical payload sizes indicating failed attempts.",
+    "detection": "Tracking repetitive failed authentication attempts originating from a specific initiator_ip.",
+    "mitigation": "Account lockout policies, Multi-Factor Authentication (MFA), fail2ban.",
+    "references": "MITRE ATT&CK T1110 (Brute Force)",
+    "tags": ["bruteforce", "authentication"]
+  },
+  {
+    "title": "SQL Injection (SQLi)",
+    "category": "Attacks",
+    "description": "Interfering with queries an application makes to its database.",
+    "features": "Presence of SQL meta-characters (', --, #) in payloads.",
+    "detection": "Layer 7 DPI looking for anomalous string patterns like 'OR 1=1' in HTTP GET/POST.",
+    "mitigation": "Prepared Statements (Parameterized Queries), strict input validation, WAF.",
+    "references": "OWASP Top 10 A03:2021-Injection",
+    "tags": ["sqli", "injection", "web"]
+  },
+  {
+    "title": "Cross-Site Scripting (XSS)",
+    "category": "Attacks",
+    "description": "Injection attacks wherein malicious scripts are injected into otherwise benign and trusted websites.",
+    "features": "Payloads containing <script> tags or JavaScript event handlers in URLs or inputs.",
+    "detection": "WAF rules analyzing HTTP request parameters for script signatures.",
+    "mitigation": "Context-aware output encoding, Content Security Policy (CSP).",
+    "references": "OWASP Top 10 A03:2021-Injection",
+    "tags": ["xss", "web", "scripting"]
+  },
+  {
+    "title": "Man in the Middle (MitM)",
+    "category": "Attacks",
+    "description": "An attacker secretly relays and possibly alters the communications between two parties who believe they are directly communicating.",
+    "features": "Unexpected MAC address changes (ARP Spoofing), SSL certificate mismatches.",
+    "detection": "ARP cache monitoring, detecting downgraded encryption protocols.",
+    "mitigation": "Dynamic ARP Inspection (DAI), enforcing HTTPS/HSTS, VPNs.",
+    "references": "MITRE ATT&CK T1557 (Adversary-in-the-Middle)",
+    "tags": ["mitm", "interception", "arp"]
+  },
+  {
+    "title": "CIA Triad",
+    "category": "Cybersecurity_Fundamentals",
+    "description": "Confidentiality, Integrity, and Availability - the core model for info security policies.",
+    "features": "Confidentiality (encryption), Integrity (hashing), Availability (redundancy).",
+    "detection": "Breaches impact these pillars. DoS impacts Availability. MitM impacts Confidentiality.",
+    "mitigation": "Cryptography, continuous monitoring, highly available architectures.",
+    "references": "NIST SP 800-12",
+    "tags": ["cia", "fundamentals", "theory"]
+  },
+  {
+    "title": "Authentication vs Authorization",
+    "category": "Cybersecurity_Fundamentals",
+    "description": "Authentication verifies WHO you are (identity). Authorization verifies WHAT you can do (permissions).",
+    "features": "AuthN uses passwords/MFA. AuthZ uses RBAC/ABAC.",
+    "detection": "Privilege Escalation attacks bypass AuthZ. Brute Force bypasses AuthN.",
+    "mitigation": "Implement MFA for AuthN, and Principle of Least Privilege for AuthZ.",
+    "references": "NIST SP 800-63 (Digital Identity Guidelines)",
+    "tags": ["auth", "identity", "access"]
+  },
+  {
+    "title": "Signature vs Anomaly Detection",
+    "category": "IDS_Knowledge",
+    "description": "Signature detection looks for known bad patterns (like antivirus). Anomaly detection creates a baseline of normal traffic and flags deviations.",
+    "features": "Signatures are fast but miss zero-days. Anomaly uses ML/Stats but has higher false positives.",
+    "detection": "Modern Hybrid IDS (like AI Wireshark) uses both methodologies concurrently.",
+    "mitigation": "Continuous updates for signatures, continuous model retraining for anomalies.",
+    "references": "NIST SP 800-94 (Guide to Intrusion Detection and Prevention Systems)",
+    "tags": ["ids", "detection", "methodology"]
+  },
+  {
+    "title": "Random Forest Algorithm",
+    "category": "Machine_Learning",
+    "description": "An ensemble learning method for classification that operates by constructing a multitude of decision trees and outputting the mode of the classes.",
+    "features": "Robust against overfitting, provides feature importance.",
+    "detection": "Used as a primary classifier to differentiate benign traffic from attacks using network flow features.",
+    "mitigation": "Hyperparameter tuning (e.g., n_estimators, max_depth) prevents model drift.",
+    "references": "Breiman, L. (2001). 'Random Forests'. Machine Learning.",
+    "tags": ["ml", "random-forest", "classification"]
+  },
+  {
+    "title": "CIC-IDS2017 Dataset",
+    "category": "Dataset_Knowledge",
+    "description": "A comprehensive cybersecurity dataset containing benign and common attacks, closely resembling true real-world data (PCAPs and flow features).",
+    "features": "Includes Brute Force, DoS, Web Attacks, Infiltration, Botnet, and DDoS.",
+    "detection": "Serves as the benchmark for training and testing ML models in network intrusion detection.",
+    "mitigation": "N/A - Used for model training and evaluation.",
+    "references": "Canadian Institute for Cybersecurity (CIC)",
+    "tags": ["dataset", "cic-ids2017", "training"]
+  },
+  {
+    "title": "Spydera (INMIDS) Core Concept",
+    "category": "Spydera_Project",
+    "description": "Spydera, technically known as INMIDS (Intelligent Network Monitoring & Intrusion Detection System), is an advanced desktop-based cybersecurity platform acting as an 'AI Wireshark'. It merges real-time network visibility (packet capture) with AI-driven threat intelligence in a single unified interface.",
+    "features": "PyQt5 Frameless GUI, Flask REST API, SQLite WAL Database, C++ fast_sniffer.",
+    "detection": "Utilizes a multi-stage pipeline: packet capture, flow normalization, hybrid AI threat analysis, and automated C2 response.",
+    "mitigation": "Solves tool fragmentation and high latency by providing zero-latency automated processing without requiring multiple software tools like Wireshark and Snort.",
+    "references": "Spydera Complete Book - Chapter 1 & 2",
+    "tags": ["spydera", "inmids", "ai-wireshark", "overview"]
+  },
+  {
+    "title": "Spydera Technology Stack & Architecture",
+    "category": "Spydera_Project",
+    "description": "Spydera is built on a 5-layer hybrid architecture. It uses C++ (fast_sniffer) for high-speed packet capture, Python/Scapy for flow processing, Flask for the REST API (C2 Backend), and React/PyQt5 for the presentation layer.",
+    "features": "C++ libpcap engine (up to 800k pkt/s), Producer-Consumer threading, SQLite WAL mode, Flask API on port 5000.",
+    "detection": "Captures raw Ethernet frames using Npcap/C++, passes them via shared-memory ring buffer to Python, converts them to 18-field flow dictionaries, and feeds them to the AI Engine.",
+    "mitigation": "The hybrid stack ensures wire-speed capture without sacrificing the flexibility of Python's ML ecosystem.",
+    "references": "Spydera Complete Book - Chapter 3 & 4",
+    "tags": ["architecture", "stack", "c++", "flask", "pyqt5"]
+  },
+  {
+    "title": "Spydera AI Detection Engine (5 Families)",
+    "category": "Spydera_Project",
+    "description": "The AI Core Engine in Spydera operates in real-time, executing six sequential detection stages to identify both known and zero-day threats.",
+    "features": "Flood Detection, TCP Anomaly, ARP Spoofing (MITM), DNS Tunneling, Deep Payload Inspection (DPI).",
+    "detection": "Analyzes PPS/Bandwidth for Floods, flag anomalies (XMAS/NULL/SYN) for TCP, MAC-IP bindings for ARP, query volume/entropy for DNS, and applies 8 regex signatures (SQLi, XSS, RCE, LFI) on payloads up to 4096 bytes.",
+    "mitigation": "Generates severity-coded alerts (1 to 5). Features a 10-second alert cooldown per IP to prevent UI/Database flooding during sustained attacks.",
+    "references": "Spydera Complete Book - Chapter 6",
+    "tags": ["ai", "detection", "dpi", "flooding", "arp", "dns"]
+  },
+  {
+    "title": "Spydera Ransomware Behavior Analyzer",
+    "category": "Spydera_Project",
+    "description": "A specialized sub-component of Spydera's AI that targets advanced persistent threats (APTs) and ransomware through cumulative multi-signal behavioral scoring.",
+    "features": "C2 Beaconing (CV < 0.15), DGA Domain Entropy (> 4.2), SMB Lateral Movement, Large Internal Data Transfers.",
+    "detection": "Aggregates weak signals over time. If the combined weight of evidence crosses a threshold (100 points), it flags a RANSOMWARE_CRITICAL alert.",
+    "mitigation": "Automatically triggers the DEFCON 1 protocol upon reaching severity 5.",
+    "references": "Spydera Complete Book - Chapter 6.5",
+    "tags": ["ransomware", "behavioral", "scoring", "apt"]
+  },
+  {
+    "title": "Spydera Machine Learning Layers (Random Forest & Isolation Forest)",
+    "category": "Spydera_Project",
+    "description": "Spydera uses two ML models trained on the CICIDS2017 dataset to classify flows with high precision and detect zero-day anomalies.",
+    "features": "Random Forest (Supervised, 31 features, 200 estimators) and Isolation Forest (Unsupervised, Baseline anomaly detection).",
+    "detection": "Random Forest handles known families (DoS, PortScan, Brute Force) with near 100% accuracy. Isolation Forest establishes a benign baseline and flags statistically distant volumetric flows (zero-days) that bypass signatures.",
+    "mitigation": "Features undergo Variance Threshold, Correlation Filtering, and Log Transformation to ensure high-speed real-time classification.",
+    "references": "Spydera Document 3 - ML Extension",
+    "tags": ["machine-learning", "random-forest", "isolation-forest", "cicids2017"]
+  },
+  {
+    "title": "Spydera DEFCON 1 Auto-Containment Protocol",
+    "category": "Spydera_Project",
+    "description": "Spydera's automated incident response mechanism for critical threats (Severity 5).",
+    "features": "Windows Firewall isolation, process freezing, C2 channel preservation.",
+    "detection": "Triggered automatically by events like Gateway ARP Spoofing or Ransomware Critical scores.",
+    "mitigation": "Isolates the affected endpoint at the Windows Firewall level, terminating malicious processes while keeping the secure C2 TLS connection alive for forensic investigation by SOC analysts.",
+    "references": "Spydera Complete Book - Incident Response",
+    "tags": ["defcon", "containment", "isolation", "response"]
+  },
+  {
+    "title": "Spydera Remote Agents and C2 Architecture",
+    "category": "Spydera_Project",
+    "description": "Spydera is not just a local tool; it supports a distributed enterprise architecture where lightweight remote agents feed traffic to a centralized Command and Control (C2) server.",
+    "features": "Dynamic Discovery (GitHub Gist, DuckDNS, LAN UDP), Fernet Payload Encryption, JWT Authentication.",
+    "detection": "Agents capture local traffic on endpoints and send structured flow dicts to the central Flask API. Enables cross-agent correlation to detect lateral movement across subnets.",
+    "mitigation": "Commands and data are serialized to JSON, compressed via zlib, encrypted with AES-128-CBC (Fernet), and Base64 encoded for stealthy, secure transmission.",
+    "references": "Spydera Complete Book - Chapter 13",
+    "tags": ["c2", "agents", "distributed", "encryption", "stealth"]
+  }
+]
